@@ -138,6 +138,24 @@ def _apply_assign(state: dict, letter: str, file_id: str, force: bool) -> None:
     slot["file_id"] = file_id                   # replaced file simply becomes unassigned
 
 
+def unassign(file_id: str) -> dict:
+    """Take a file out of whichever section holds it ("None" in the Assign-to menu)."""
+    file_id = validate_file_id(file_id)
+
+    def mutate(state):
+        rec = _find_file(state, file_id)
+        if not rec:
+            raise AppError(404, "File not found.")
+        letter = _assigned_letter(state, file_id)
+        if letter:
+            slot = _slot(state, letter)
+            if slot["description"].strip() == _default_description(rec):
+                slot["description"] = ""        # drop the auto-filled name; typed text stays
+            slot["file_id"] = None
+    store.update(mutate)
+    return snapshot()
+
+
 def assign(letter: str, file_id: str, force: bool) -> dict:
     letter = validate_letter(letter)
     file_id = validate_file_id(file_id)

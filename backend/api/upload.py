@@ -5,7 +5,7 @@ from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import Response
 
 from backend.errors import AppError
-from backend.models import FileOut, UploadResponse, UploadResult
+from backend.models import FileOut, SnapshotOut, UploadResponse, UploadResult
 from backend.services import course_file_service as svc
 
 log = logging.getLogger("cfg.api.upload")
@@ -41,6 +41,12 @@ def list_files():
 @router.get("/{file_id}", response_model=FileOut)
 def get_file(file_id: str):
     return svc.get_file(file_id)
+
+
+@router.post("/{file_id}/unassign", response_model=SnapshotOut)
+def unassign_file(file_id: str):
+    """Remove the file from its A-Z section (it stays in the library)."""
+    return svc.unassign(file_id)
 
 
 @router.get("/{file_id}/preview")

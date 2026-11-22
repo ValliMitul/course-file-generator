@@ -147,10 +147,12 @@ function renderLibrary() {
   for (const f of state.files) {
     const sel = el('select', { 'aria-label': `Assign ${f.original_name}` },
       el('option', { value: '', text: 'Assign to…' }),
+      el('option', { value: '__none__', text: 'None (unassign)' }),
       ...LETTERS.map((l) => el('option', { value: l, text: l + (f.assigned_to === l ? ' (current)' : '') })));
     sel.addEventListener('change', async () => {
       const l = sel.value; sel.value = '';
-      if (l) await assignFlow(l, f.id);
+      if (l === '__none__') await unassignFlow(f);
+      else if (l) await assignFlow(l, f.id);
     });
     body.append(el('tr', {},
       el('td', { text: f.original_name }),
@@ -323,6 +325,14 @@ async function assignFlow(letter, fileId) {
       } catch (e2) { toast(e2.message, 'error'); }
     } else if (e.status !== 409) toast(e.message, 'error');
   }
+}
+
+async function unassignFlow(f) {
+  if (!f.assigned_to) { toast(`${f.original_name} is not assigned to any section.`); return; }
+  try {
+    applySnapshot(await postJson(`/api/files/${f.id}/unassign`, {}));
+    toast(`${f.original_name} removed from section ${f.assigned_to}.`, 'success');
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 function selectFlow(letter) {
