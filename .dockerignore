@@ -1,0 +1,7 @@
+.venv
+.env
+storage
+tests
+__pycache__
+*.pyc
+faculty.txt

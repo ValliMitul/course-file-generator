@@ -1,0 +1,14 @@
+﻿.venv/
+__pycache__/
+*.pyc
+storage/uploads/*
+storage/converted/*
+storage/output/*
+storage/temp/*
+storage/project.json
+storage/project.json.tmp
+storage/project.corrupt-*.json
+!storage/*/.gitkeep
+storage/users/
+storage/secret.key
+.env

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Course File Generator</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%2314305c'/%3E%3Ctext x='16' y='23' font-size='20' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EA%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <h1>COURSE FILE GENERATOR</h1>
+      <div class="actions">
+        <button id="btn-upload" class="btn btn-primary">Upload Files</button>
+        <button id="btn-generate" class="btn btn-accent">Generate Final PDF</button>
+      </div>
+      <div class="user-box" id="user-box" hidden>
+        <span id="user-name"></span>
+        <button id="btn-logout" class="btn btn-sm">Logout</button>
+      </div>
+      <div class="summary" id="summary">
+        <span><b id="sum-files">0</b> files uploaded</span>
+        <span><b id="sum-assigned">0</b> assigned</span>
+        <span><b id="sum-empty">26</b> empty sections</span>
+      </div>
+    </div>
+    <div id="lo-warning" class="banner banner-error" hidden></div>
+  </header>
+
+  <main>
+    <section class="card" id="course-card">
+      <h2>Course Details</h2>
+      <div class="course-grid">
+        <label>Course Name <input type="text" data-course="course_name"></label>
+        <label>Course Code <input type="text" data-course="course_code"></label>
+        <label>Department <input type="text" data-course="department"></label>
+        <label>Semester <input type="text" data-course="semester"></label>
+        <label>Academic Year <input type="text" data-course="academic_year" placeholder="e.g. 2025-26"></label>
+        <label>Course Coordinator <input type="text" data-course="course_coordinator"></label>
+      </div>
+    </section>
+
+    <section class="card" id="result-card" hidden>
+      <div class="result-head">
+        <h2>Course File Generated Successfully</h2>
+      </div>
+      <ul class="result-list">
+        <li>Output file: <b id="res-name"></b></li>
+        <li>Documents included: <b id="res-docs"></b></li>
+        <li>Total pages: <b id="res-pages"></b></li>
+      </ul>
+      <div class="actions">
+        <button id="btn-preview-final" class="btn">Preview Final PDF</button>
+        <a id="btn-download-final" class="btn btn-primary" href="/api/generate/download">Download Final PDF</a>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Course File Sections (A–Z)</h2>
+      <div class="table-scroll" id="table-scroll">
+        <table class="az-table">
+          <thead>
+            <tr>
+              <th class="col-letter">Alphabet</th>
+              <th class="col-desc">Description</th>
+              <th class="col-file">Assigned File</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="az-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Uploaded Files</h2>
+      <div class="table-scroll lib-scroll">
+        <table class="lib-table">
+          <thead>
+            <tr><th>Filename</th><th>Type</th><th>Size</th><th>Status</th><th>Assignment</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="lib-body"></tbody>
+        </table>
+      </div>
+      <p id="lib-empty" class="muted">No files uploaded yet. Click “Upload Files” to begin.</p>
+    </section>
+  </main>
+
+  <!-- hidden pickers -->
+  <input type="file" id="input-multi" multiple hidden
+         accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt">
+  <input type="file" id="input-slot" hidden
+         accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt">
+
+  <!-- Select-file modal -->
+  <div class="modal" id="select-modal" hidden>
+    <div class="modal-box">
+      <h3 id="select-title">SELECT FILE</h3>
+      <input type="search" id="select-search" placeholder="Search files…">
+      <ul class="pick-list" id="select-list"></ul>
+      <div class="modal-actions">
+        <button class="btn" id="select-cancel">Cancel</button>
+        <button class="btn btn-primary" id="select-confirm" disabled>Assign</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm modal -->
+  <div class="modal" id="confirm-modal" hidden>
+    <div class="modal-box modal-small">
+      <h3 id="confirm-title">Confirm</h3>
+      <p id="confirm-text"></p>
+      <div class="modal-actions">
+        <button class="btn" id="confirm-cancel">Cancel</button>
+        <button class="btn btn-accent" id="confirm-ok">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Universal preview panel -->
+  <div class="modal" id="preview-modal" hidden>
+    <div class="preview-box" id="preview-box">
+      <div class="preview-head">
+        <div>
+          <div class="preview-title">PREVIEW</div>
+          <div>File: <b id="pv-name"></b></div>
+          <div class="muted">Type: <span id="pv-type"></span></div>
+        </div>
+        <button class="btn" id="pv-close">Close</button>
+      </div>
+      <div class="preview-toolbar">
+        <button class="btn btn-sm" id="pv-prev">&lt; Previous</button>
+        <span>Page <input type="number" id="pv-page" min="1" value="1"> / <span id="pv-pages">0</span></span>
+        <button class="btn btn-sm" id="pv-next">Next &gt;</button>
+        <span class="sep"></span>
+        <button class="btn btn-sm" id="pv-zoom-out" title="Zoom out">−</button>
+        <span id="pv-zoom">100%</span>
+        <button class="btn btn-sm" id="pv-zoom-in" title="Zoom in">+</button>
+        <button class="btn btn-sm" id="pv-fit">Fit to width</button>
+        <button class="btn btn-sm" id="pv-full">Fullscreen</button>
+      </div>
+      <div class="preview-canvas-wrap" id="pv-wrap">
+        <div id="pv-status" class="muted">Loading…</div>
+        <canvas id="pv-canvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login screen -->
+  <div class="login-screen" id="login-screen" hidden>
+    <form class="login-box" id="login-form" autocomplete="on">
+      <h1>COURSE FILE GENERATOR</h1>
+      <p class="muted">Faculty login</p>
+      <label>Email <input type="email" id="login-id" autocomplete="username" required></label>
+      <label>Password <input type="password" id="login-pass" autocomplete="current-password" required></label>
+      <div id="login-error" class="login-error" hidden></div>
+      <button class="btn btn-primary" type="submit" id="login-btn">Log in</button>
+    </form>
+  </div>
+
+  <div id="loading" class="loading" hidden><div class="spinner"></div><div id="loading-text">Working…</div></div>
+  <div id="toasts" class="toasts"></div>
+
+  <script src="config.js"></script>
+  <script type="module" src="script.js"></script>
+</body>
+</html>
