@@ -1,5 +1,6 @@
 """Business logic: uploads, slot assignment, drag swaps and final PDF generation."""
 import logging
+import os
 import shutil
 import tempfile
 import uuid
@@ -98,6 +99,11 @@ def set_description(letter: str, description: str) -> dict:
     return snapshot()
 
 
+def _default_description(rec: dict) -> str:
+    """The file name without its extension - the default description of a section."""
+    return os.path.splitext(rec["original_name"])[0].strip()[: config.MAX_DESCRIPTION_LENGTH]
+
+
 def _apply_assign(state: dict, letter: str, file_id: str, force: bool) -> None:
     rec = _find_file(state, file_id)
     if not rec:
@@ -117,8 +123,18 @@ def _apply_assign(state: dict, letter: str, file_id: str, force: bool) -> None:
             cur = _find_file(state, slot["file_id"])
             raise AppError(409, f"Section {letter} already contains {cur['original_name'] if cur else 'a file'}. "
                                 "Do you want to replace it?", code="slot_occupied")
+    prev = _find_file(state, slot["file_id"]) if slot["file_id"] else None
     if other:
-        _slot(state, other)["file_id"] = None  # moving: free the old section (description stays)
+        old = _slot(state, other)
+        moved = _find_file(state, old["file_id"])
+        if moved and old["description"].strip() == _default_description(moved):
+            old["description"] = ""            # the auto-filled name leaves with its file
+        old["file_id"] = None                  # moving: free the old section
+    # Default the description to the file's name, but never overwrite text the user typed
+    # (an earlier auto-filled name may be replaced along with its file).
+    current = slot["description"].strip()
+    if not current or (prev and current == _default_description(prev)):
+        slot["description"] = _default_description(rec)
     slot["file_id"] = file_id                   # replaced file simply becomes unassigned
 
 

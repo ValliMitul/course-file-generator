@@ -133,7 +133,7 @@ function render() {
     const r = rows[s.letter];
     if (document.activeElement !== r.desc) r.desc.value = s.description;
     r.file.replaceChildren(s.file
-      ? el('span', {}, s.file.original_name, el('span', { class: 'ftype', text: s.file.file_type }))
+      ? el('span', { class: 'ftype', text: s.file.file_type })
       : el('span', { class: 'empty', text: 'Empty' }));
     r.view.disabled = !s.file;
   }

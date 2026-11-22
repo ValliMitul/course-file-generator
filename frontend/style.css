@@ -66,7 +66,7 @@ td { padding: 5px 10px; border-bottom: 1px solid var(--border); vertical-align: 
 .az-table td.letter { text-align: center; font-weight: 700; font-size: 18px; color: #fff; background: var(--navy); border-bottom: 1px solid var(--navy-dark); user-select: none; }
 .az-table td.file-cell { font-size: 13px; word-break: break-word; }
 .az-table td.file-cell .empty { color: var(--muted); font-style: italic; }
-.az-table td.file-cell .ftype { color: var(--muted); font-size: 11px; margin-left: 4px; }
+.az-table td.file-cell .ftype { font-weight: 600; color: var(--navy); }
 .az-table td.actions-cell { white-space: nowrap; }
 .az-table td.actions-cell .btn { margin-right: 3px; }
 .az-table td.desc input { background: #fafbfd; }
