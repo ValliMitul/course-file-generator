@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend import config
-from backend.api import auth, convert, generate, sections, upload
+from backend.api import auth, catalog, convert, generate, sections, upload
 from backend.errors import AppError
 from backend.models import HealthResponse
 from backend.services import file_converter
@@ -25,7 +25,7 @@ app = FastAPI(title="Course File Generator", version="1.0.0")
 
 if config.ALLOWED_ORIGINS:
     app.add_middleware(CORSMiddleware, allow_origins=config.ALLOWED_ORIGINS, allow_credentials=True,
-                       allow_methods=["GET", "POST", "PUT"], allow_headers=["Content-Type"])
+                       allow_methods=["GET", "POST", "PUT", "DELETE"], allow_headers=["Content-Type"])
 
 
 @app.exception_handler(AppError)
@@ -61,6 +61,7 @@ app.include_router(upload.router, dependencies=protected)
 app.include_router(convert.router, dependencies=protected)
 app.include_router(sections.router, dependencies=protected)
 app.include_router(generate.router, dependencies=protected)
+app.include_router(catalog.router, dependencies=protected)
 
 # Serve the frontend too, so http://127.0.0.1:8000 works on its own (no second server needed).
 app.mount("/", StaticFiles(directory=config.FRONTEND_DIR, html=True), name="frontend")

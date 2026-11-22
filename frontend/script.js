@@ -1,4 +1,5 @@
 import { FilePreviewPanel } from './pdf-preview.js';
+import { ensureOption, initCatalogUi } from './catalog-ui.js';
 
 // ------------------------------------------------------------------ setup
 // The page is served by the backend itself, so API calls are same-origin (cookies just work).
@@ -121,7 +122,7 @@ function buildRows() {
 function render() {
   // Course fields
   document.querySelectorAll('[data-course]').forEach((inp) => {
-    if (document.activeElement !== inp) inp.value = state.course[inp.dataset.course] ?? '';
+    if (document.activeElement !== inp) setFieldValue(inp, state.course[inp.dataset.course] ?? '');
   });
   // Summary
   $('sum-files').textContent = state.summary.total_files ?? 0;
@@ -219,6 +220,20 @@ async function saveCourse() {
     });
   } catch (e) { toast(`Could not save course details: ${e.message}`, 'error'); }
 }
+/** Set a form field; a <select> gets an extra option if the saved value is not in its list. */
+function setFieldValue(inp, value) {
+  if (inp.tagName === 'SELECT') ensureOption(inp, value);
+  inp.value = value;
+}
+
+/** Programmatically change one course-detail field and save it like a user edit. */
+function setCourseField(name, value) {
+  const inp = document.querySelector(`[data-course="${name}"]`);
+  state.course[name] = value;
+  if (inp) setFieldValue(inp, value);
+  debounce('course', saveCourse);
+}
+
 function initCourseInputs() {
   document.querySelectorAll('[data-course]').forEach((inp) => {
     inp.addEventListener('input', () => { state.course[inp.dataset.course] = inp.value; debounce('course', saveCourse); });
@@ -464,6 +479,33 @@ function showLogin() {
 }
 
 function initLogin() {
+  // Sign in / Sign up tabs
+  document.querySelectorAll('[data-auth-tab]').forEach((tab) => tab.addEventListener('click', () => {
+    const up = tab.dataset.authTab === 'signup';
+    document.querySelectorAll('[data-auth-tab]').forEach((t) => t.classList.toggle('active', t === tab));
+    $('login-form').hidden = up; $('signup-form').hidden = !up;
+    $('login-error').hidden = true;
+  }));
+  $('signup-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('login-error').hidden = true;
+    if ($('su-pass').value !== $('su-pass2').value) {
+      $('login-error').textContent = 'The two passwords do not match.';
+      $('login-error').hidden = false;
+      return;
+    }
+    $('su-btn').disabled = true;
+    try {
+      await api('/api/auth/signup', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, noAuthRedirect: true,
+        body: JSON.stringify({ name: $('su-name').value, email: $('su-email').value, password: $('su-pass').value }),
+      });
+      location.reload();
+    } catch (err) {
+      $('login-error').textContent = err.message;
+      $('login-error').hidden = false;
+    } finally { $('su-btn').disabled = false; }
+  });
   $('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     $('login-error').hidden = true;
@@ -490,9 +532,11 @@ function initLogin() {
 // ------------------------------------------------------------------- init
 async function init() {
   initLogin();
+  let me = null;
   try {
-    const me = await api('/api/auth/me', { noAuthRedirect: true });
+    me = await api('/api/auth/me', { noAuthRedirect: true });
     $('user-name').textContent = me.name;
+    $('user-role').textContent = me.role;
     $('user-box').hidden = false;
   } catch (e) {
     if (e.status === 401) { showLogin(); $('login-id').focus(); return; }
@@ -506,6 +550,7 @@ async function init() {
   }
   buildRows();
   initCourseInputs();
+  initCatalogUi({ $, el, api, toast, confirmDialog, state, setCourseField, role: me.role });
   $('btn-upload').onclick = () => { $('input-multi').value = ''; $('input-multi').click(); };
   $('input-multi').onchange = () => uploadMany($('input-multi').files);
   $('input-slot').onchange = slotUploadChosen;

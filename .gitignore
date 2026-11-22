@@ -12,3 +12,7 @@ storage/project.corrupt-*.json
 storage/users/
 storage/secret.key
 .env
+
+# Staff/course seed data (loaded into Appwrite directly; keep out of the public repo)
+backend/data/
+faculty.txt

@@ -10,6 +10,9 @@
 <body>
   <header class="topbar">
     <div class="topbar-inner">
+      <a class="brand" href="./" title="PDEU - Pandit Deendayal Energy University">
+        <img src="assets/pdeu-logo.webp" alt="PDEU - Pandit Deendayal Energy University" width="140" height="41">
+      </a>
       <h1>COURSE FILE GENERATOR</h1>
       <div class="actions">
         <button id="btn-upload" class="btn btn-primary">Upload Files</button>
@@ -17,6 +20,8 @@
       </div>
       <div class="user-box" id="user-box" hidden>
         <span id="user-name"></span>
+        <span id="user-role" class="role-badge"></span>
+        <button id="btn-admin" class="btn btn-sm" hidden>Admin</button>
         <button id="btn-logout" class="btn btn-sm">Logout</button>
       </div>
       <div class="summary" id="summary">
@@ -32,12 +37,24 @@
     <section class="card" id="course-card">
       <h2>Course Details</h2>
       <div class="course-grid">
-        <label>Course Name <input type="text" data-course="course_name"></label>
-        <label>Course Code <input type="text" data-course="course_code"></label>
+        <label>Course Code
+          <span class="field-row">
+            <input type="text" data-course="course_code" list="course-codes" autocomplete="off" placeholder="e.g. 20CP101T">
+            <button type="button" class="icon-btn" id="btn-add-course" title="Add a new course" aria-label="Add a new course">+</button>
+          </span>
+          <small id="code-hint" class="hint"></small>
+          <datalist id="course-codes"></datalist>
+        </label>
+        <label>Course Name <input type="text" data-course="course_name" placeholder="Filled in automatically from the code"></label>
         <label>Department <input type="text" data-course="department"></label>
-        <label>Semester <input type="text" data-course="semester"></label>
-        <label>Academic Year <input type="text" data-course="academic_year" placeholder="e.g. 2025-26"></label>
-        <label>Course Coordinator <input type="text" data-course="course_coordinator"></label>
+        <label>Semester <select data-course="semester"></select></label>
+        <label>Academic Year <select data-course="academic_year"></select></label>
+        <label>Course Coordinator
+          <span class="field-row">
+            <select data-course="course_coordinator"></select>
+            <button type="button" class="icon-btn" id="btn-add-coordinator" title="Add a new course coordinator" aria-label="Add a new course coordinator">+</button>
+          </span>
+        </label>
       </div>
     </section>
 
@@ -106,6 +123,53 @@
     </div>
   </div>
 
+  <!-- Add course -->
+  <div class="modal" id="course-modal" hidden>
+    <div class="modal-box modal-form">
+      <h3>Add a new course</h3>
+      <form autocomplete="off">
+        <label>Course code <input name="code" required maxlength="40" placeholder="e.g. 20CP101T"></label>
+        <label>Course name <input name="name" required maxlength="200"></label>
+        <label>Semester <select name="semester"></select></label>
+        <div class="form-error" hidden></div>
+        <div class="modal-actions">
+          <button type="button" class="btn" data-close>Cancel</button>
+          <button type="submit" class="btn btn-primary">Add course</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add coordinator -->
+  <div class="modal" id="coord-modal" hidden>
+    <div class="modal-box modal-form">
+      <h3>Add a new course coordinator</h3>
+      <form autocomplete="off">
+        <label>Full name <input name="name" required maxlength="120"></label>
+        <label>Designation <input name="designation" maxlength="80" placeholder="e.g. Assistant Professor"></label>
+        <div class="form-error" hidden></div>
+        <div class="modal-actions">
+          <button type="button" class="btn" data-close>Cancel</button>
+          <button type="submit" class="btn btn-primary">Add coordinator</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin panel -->
+  <div class="modal" id="admin-modal" hidden>
+    <div class="modal-box modal-wide">
+      <h3>Administration</h3>
+      <div class="tabs">
+        <button class="tab active" data-tab="users" type="button">Users &amp; roles</button>
+        <button class="tab" data-tab="courses" type="button">Courses</button>
+        <button class="tab" data-tab="coordinators" type="button">Coordinators</button>
+      </div>
+      <div id="admin-body" class="admin-body"></div>
+      <div class="modal-actions"><button class="btn" data-close type="button">Close</button></div>
+    </div>
+  </div>
+
   <!-- Confirm modal -->
   <div class="modal" id="confirm-modal" hidden>
     <div class="modal-box modal-small">
@@ -149,14 +213,28 @@
 
   <!-- Login screen -->
   <div class="login-screen" id="login-screen" hidden>
-    <form class="login-box" id="login-form" autocomplete="on">
+    <div class="login-box">
+      <img class="login-logo" src="assets/pdeu-logo.webp" alt="PDEU - Pandit Deendayal Energy University">
       <h1>COURSE FILE GENERATOR</h1>
-      <p class="muted">Faculty login</p>
-      <label>Email <input type="email" id="login-id" autocomplete="username" required></label>
-      <label>Password <input type="password" id="login-pass" autocomplete="current-password" required></label>
+      <div class="tabs">
+        <button class="tab active" type="button" data-auth-tab="signin">Sign in</button>
+        <button class="tab" type="button" data-auth-tab="signup">Sign up</button>
+      </div>
+      <form id="login-form" autocomplete="on">
+        <label>Email <input type="email" id="login-id" autocomplete="username" required></label>
+        <label>Password <input type="password" id="login-pass" autocomplete="current-password" required></label>
+        <button class="btn btn-primary" type="submit" id="login-btn">Sign in</button>
+      </form>
+      <form id="signup-form" autocomplete="on" hidden>
+        <label>Full name <input type="text" id="su-name" autocomplete="name" required maxlength="100"></label>
+        <label>Email <input type="email" id="su-email" autocomplete="email" required></label>
+        <label>Password (8+ characters) <input type="password" id="su-pass" autocomplete="new-password" required minlength="8"></label>
+        <label>Confirm password <input type="password" id="su-pass2" autocomplete="new-password" required minlength="8"></label>
+        <p class="muted small">New accounts are created with the <b>Faculty</b> role. Administrator access is granted by an existing administrator.</p>
+        <button class="btn btn-primary" type="submit" id="su-btn">Create account</button>
+      </form>
       <div id="login-error" class="login-error" hidden></div>
-      <button class="btn btn-primary" type="submit" id="login-btn">Log in</button>
-    </form>
+    </div>
   </div>
 
   <div id="loading" class="loading" hidden><div class="spinner"></div><div id="loading-text">Working…</div></div>

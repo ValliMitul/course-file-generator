@@ -24,8 +24,15 @@ APPWRITE_PROJECTS_TABLE = os.environ.get("APPWRITE_PROJECTS_TABLE", "projects")
 APPWRITE_FILES_TABLE = os.environ.get("APPWRITE_FILES_TABLE", "files")
 APPWRITE_BUCKET_ID = os.environ.get("APPWRITE_BUCKET_ID", "course-files")
 
-# Only Appwrite users carrying this label may use the app (labels can only be set server-side).
+# Roles are Appwrite user labels (labels can only be set server-side, never by the user):
+#   "faculty" - normal user.  "admin" - faculty rights plus catalog deletes and user management.
 FACULTY_LABEL = os.environ.get("CFG_FACULTY_LABEL", "faculty")
+ADMIN_LABEL = os.environ.get("CFG_ADMIN_LABEL", "admin")
+ROLES = (ADMIN_LABEL, FACULTY_LABEL)
+# Optional sign-up allow-list, e.g. "pdpu.ac.in,sot.pdpu.ac.in". Empty = anyone can sign up as faculty.
+SIGNUP_DOMAINS = [d.strip().lower().lstrip("@") for d in os.environ.get("CFG_SIGNUP_DOMAINS", "").split(",") if d.strip()]
+APPWRITE_COURSES_TABLE = os.environ.get("APPWRITE_COURSES_TABLE", "courses")
+APPWRITE_COORDINATORS_TABLE = os.environ.get("APPWRITE_COORDINATORS_TABLE", "coordinators")
 SESSION_DAYS = 30
 
 # Appwrite's free plan caps a single file at 50,000,000 bytes.
@@ -51,6 +58,7 @@ TEMP_DIR = Path(os.environ.get("CFG_TEMP_DIR") or Path(tempfile.gettempdir()) / 
 
 # The authenticated Appwrite user id for the current request (set by the auth dependency).
 current_user: ContextVar[str | None] = ContextVar("current_user", default=None)
+current_role: ContextVar[str | None] = ContextVar("current_role", default=None)
 
 
 def temp_dir() -> Path:
