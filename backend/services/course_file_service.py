@@ -12,7 +12,7 @@ from fastapi import UploadFile
 from backend import config
 from backend.errors import AppError
 from backend.models import CourseDetails
-from backend.services import file_detector, file_converter, file_storage, pdf_merger
+from backend.services import cover_page, file_detector, file_converter, file_storage, pdf_merger
 from backend.services.file_storage import COURSE_FIELDS, ProjectStore
 from backend.utils.file_utils import sanitize_filename, sanitize_for_output, save_upload
 from backend.utils.validation import validate_file_id, validate_letter
@@ -291,8 +291,12 @@ def generate_final_pdf() -> dict:
             part = work / f"{i:02d}.pdf"
             part.write_bytes(data)
             sources.append((orig, part))
+        # Page 1 is always the cover page, filled in from the details entered in the app.
+        cover = work / "cover.pdf"
+        cover_page.build_cover_pdf(state["course"], state["slots"], work, cover)
+        sources.insert(0, ("Cover page", cover))
         dest = work / "final.pdf"
-        pages = pdf_merger.merge_pdfs(sources, dest)
+        pages = pdf_merger.merge_pdfs(sources, dest)       # cover + A-Z documents, in order
 
         blob_id = _final_blob_id()
         file_storage.delete_blob(blob_id)     # one final PDF per user; replace the previous one

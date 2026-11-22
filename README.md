@@ -135,7 +135,7 @@ API docs (Swagger): <http://127.0.0.1:8000/docs>
 
 ## Final PDF generation
 
-Slots are read in A→Z order; each assigned file's normalised PDF is appended in full with pypdf; empty
+A cover page (`backend/assets/coverpage.docx`, filled from the course details and section descriptions) is always page 1. Then slots are read in A→Z order; each assigned file's normalised PDF is appended in full with pypdf; empty
 sections are skipped; no cover, divider or blank pages. Output: `storage/output/<CourseCode>_Course_File.pdf`
 (e.g. `24CP101T_Course_File.pdf`) or `FINAL_COURSE_FILE.pdf` when no course code is set. If an assigned file
 is missing on disk the generation stops with a clear message rather than producing a partial file.
