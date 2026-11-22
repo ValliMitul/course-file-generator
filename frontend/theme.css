@@ -158,3 +158,9 @@ main { flex: 1 0 auto; width: 100%; }
 .credits b { color: #ff9ab6; font-weight: 600; }
 .site-footer { flex-shrink: 0; padding: 14px 16px 18px; border-top: 1px solid var(--border); background: rgba(20, 20, 24, .88); }
 .login-screen .credits { position: absolute; left: 0; right: 0; bottom: 14px; padding: 0 16px; color: #c9c9d1; text-shadow: 0 1px 3px rgba(0, 0, 0, .8); }
+
+/* ---- larger header logo ---- */
+.brand { padding: 6px 14px; }
+.brand img { height: 66px; width: auto; }
+.topbar-inner { padding-top: 8px; padding-bottom: 8px; }
+@media (max-width: 640px) { .brand img { height: 44px; } }
