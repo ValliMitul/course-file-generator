@@ -12,7 +12,7 @@ from fastapi import UploadFile
 from backend import config
 from backend.errors import AppError
 from backend.models import CourseDetails
-from backend.services import cover_page, file_detector, file_converter, file_storage, pdf_merger
+from backend.services import cover_page, default_files, file_detector, file_converter, file_storage, pdf_merger
 from backend.services.file_storage import COURSE_FIELDS, ProjectStore
 from backend.utils.file_utils import sanitize_filename, sanitize_for_output, save_upload
 from backend.utils.validation import validate_file_id, validate_letter
@@ -55,8 +55,18 @@ def _file_out(state: dict, f: dict) -> dict:
     }
 
 
+def _ensure_defaults(state: dict) -> dict:
+    """First visit (new or existing account): put the sample document in every empty section."""
+    if default_files.seeded(state):
+        return state
+    default_files.ensure_blobs()
+    uid = config.current_user.get()
+    store.update(lambda s: None if default_files.seeded(s) else default_files.seed(s, uid, _default_description))
+    return store.read()
+
+
 def snapshot() -> dict:
-    state = store.read()
+    state = _ensure_defaults(store.read())
     files = [_file_out(state, f) for f in state["files"]]
     by_id = {f["id"]: f for f in files}
     slots = [{"letter": s["letter"], "description": s["description"], "file_id": s["file_id"],
@@ -101,7 +111,10 @@ def set_description(letter: str, description: str) -> dict:
 
 def _default_description(rec: dict) -> str:
     """The file name without its extension - the default description of a section."""
-    return os.path.splitext(rec["original_name"])[0].strip()[: config.MAX_DESCRIPTION_LENGTH]
+    name = os.path.splitext(rec["original_name"])[0].strip()
+    if default_files.is_default(rec.get("id", "")):          # "C_Academic_Calendar" -> "Academic Calendar"
+        name = name[2:].replace("_", " ").strip()
+    return name[: config.MAX_DESCRIPTION_LENGTH]
 
 
 def _apply_assign(state: dict, letter: str, file_id: str, force: bool) -> None:

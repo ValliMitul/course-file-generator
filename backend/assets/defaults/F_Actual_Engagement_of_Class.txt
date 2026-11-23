@@ -1,0 +1,18 @@
+F. ACTUAL ENGAGEMENT OF THE CLASS
+ILLUSTRATIVE SAMPLE - FOR SOFTWARE TESTING ONLY
+
+Date: 05-Jan-2026
+Planned topic: Introduction to Course
+Actual topic covered: Course outcomes, evaluation scheme, services and
+mechanisms of security
+Engagement: Lecture and short discussion on real-world security incidents
+Observation: Students were curious about attacks; modular arithmetic
+background varied.
+Follow-up: Share a modular arithmetic practice sheet before the next class.
+
+Date: 06-Jan-2026
+Planned topic: Finite Field
+Actual topic covered: Groups, rings and finite fields with small examples
+Engagement: Board work and pair exercise on field tables
+Observation: Students could verify closure but needed practice with inverses.
+Follow-up: Start next session with a multiplicative inverse example.

@@ -1,0 +1,8 @@
+W. List of Well-Known Conferences related to the Course
+ILLUSTRATIVE SAMPLE - FOR SOFTWARE TESTING ONLY
+
+1. CRYPTO (International Cryptology Conference)
+2. EUROCRYPT
+3. IEEE Symposium on Security and Privacy
+4. ACM Conference on Computer and Communications Security (CCS)
+5. USENIX Security Symposium

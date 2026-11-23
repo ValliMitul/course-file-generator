@@ -1,0 +1,8 @@
+V. List of National / International Journals related to the Course
+ILLUSTRATIVE SAMPLE - FOR SOFTWARE TESTING ONLY
+
+1. Journal of Cryptology
+2. IEEE Transactions on Information Forensics and Security
+3. Computers & Security
+4. ACM Transactions on Privacy and Security
+5. International Journal of Information Security
