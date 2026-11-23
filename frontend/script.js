@@ -104,6 +104,7 @@ function buildRows() {
     const view = el('button', { class: 'btn btn-sm', text: 'View File', onclick: () => viewSlot(letter) });
     const select = el('button', { class: 'btn btn-sm', text: 'Select File', onclick: () => selectFlow(letter) });
     const upload = el('button', { class: 'btn btn-sm', text: 'Upload File', onclick: () => slotUploadPick(letter) });
+    const remove = el('button', { class: 'btn btn-sm btn-remove', text: 'Remove File', onclick: () => removeSlotFile(letter) });
     const handle = el('span', { class: 'handle', title: 'Drag to move/swap this section’s content', text: '⋮⋮' });
     handle.addEventListener('pointerdown', (e) => startDrag(e, letter));
     desc.addEventListener('input', () => onDescInput(letter, desc.value));
@@ -113,9 +114,9 @@ function buildRows() {
       el('td', { class: 'letter', text: letter }),
       el('td', { class: 'desc' }, desc),
       file,
-      el('td', { class: 'actions-cell' }, select, view, upload, handle));
+      el('td', { class: 'actions-cell' }, select, view, upload, remove, handle));
     body.append(tr);
-    rows[letter] = { tr, desc, file, view, select, upload, handle };
+    rows[letter] = { tr, desc, file, view, select, upload, remove, handle };
   }
 }
 
@@ -136,6 +137,7 @@ function render() {
       ? el('span', { class: 'ftype', text: s.file.file_type })
       : el('span', { class: 'empty', text: 'Empty' }));
     r.view.disabled = !s.file;
+    r.remove.disabled = !s.file;
   }
   renderLibrary();
   renderResult();
@@ -325,6 +327,16 @@ async function assignFlow(letter, fileId) {
       } catch (e2) { toast(e2.message, 'error'); }
     } else if (e.status !== 409) toast(e.message, 'error');
   }
+}
+
+async function removeSlotFile(letter) {
+  const f = slotOf(letter).file;
+  if (!f) return;
+  const ok = await confirmDialog(`Remove ${f.original_name} from section ${letter}?
+
+The file stays in the Uploaded Files list, so you can assign it again later.`,
+    { title: 'Remove file?', ok: 'Remove' });
+  if (ok) await unassignFlow({ ...f, assigned_to: letter });
 }
 
 async function unassignFlow(f) {

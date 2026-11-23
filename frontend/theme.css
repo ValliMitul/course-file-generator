@@ -164,3 +164,7 @@ main { flex: 1 0 auto; width: 100%; }
 .brand img { height: 66px; width: auto; }
 .topbar-inner { padding-top: 8px; padding-bottom: 8px; }
 @media (max-width: 640px) { .brand img { height: 44px; } }
+
+/* remove-file button */
+.btn-remove:hover:not(:disabled) { border-color: #ff5c5c; color: #ffb3b3; background: rgba(255, 92, 92, .12); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
