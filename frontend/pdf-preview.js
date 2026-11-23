@@ -54,7 +54,8 @@ export class FilePreviewPanel {
     this.fitMode = true;
     this.page = 1;
     try {
-      const doc = await pdfjsLib.getDocument({ url, withCredentials: true }).promise;
+      let token = ''; try { token = localStorage.getItem('cfg_token') || ''; } catch { /* ignore */ }
+      const doc = await pdfjsLib.getDocument({ url, withCredentials: true, httpHeaders: token ? { Authorization: `Bearer ${token}` } : undefined }).promise;
       this.pdf = doc;
       $('pv-pages').textContent = doc.numPages;
       this.pageInput.max = doc.numPages;

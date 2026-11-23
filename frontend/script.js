@@ -47,16 +47,23 @@ class ApiError extends Error {
   constructor(message, status, code) { super(message); this.status = status; this.code = code; }
 }
 
+// The session token is also kept here and sent as a header, because browsers that block third-party
+// cookies would otherwise drop the cookie set by the backend (login then bounces back to the sign-in page).
+const TOKEN_KEY = 'cfg_token';
+const getToken = () => { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; } };
+const setToken = (t) => { try { t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ } };
+const authHeaders = () => (getToken() ? { Authorization: `Bearer ${getToken()}` } : {});
+
 async function api(path, opts = {}) {
   let res;
   try {
-    res = await fetch(API_BASE + path, { credentials: 'include', ...opts });
+    res = await fetch(API_BASE + path, { credentials: 'include', ...opts, headers: { ...authHeaders(), ...(opts.headers || {}) } });
   } catch {
     throw new ApiError('Cannot reach the backend. Is it running on http://127.0.0.1:8000 ?', 0);
   }
   let data = null;
   try { data = await res.json(); } catch { /* non-JSON */ }
-  if (res.status === 401 && !opts.noAuthRedirect) showLogin();
+  if (res.status === 401 && !opts.noAuthRedirect) { setToken(''); showLogin(); }
   if (!res.ok) throw new ApiError(data?.detail || `Request failed (${res.status}).`, res.status, data?.code);
   return data;
 }
@@ -178,7 +185,19 @@ function renderResult() {
   $('res-name').textContent = o.filename;
   $('res-docs').textContent = o.total_documents;
   $('res-pages').textContent = o.total_pages;
-  $('btn-download-final').href = `${API_BASE}/api/generate/download`;
+}
+
+// A plain link cannot send the Authorization header, so the file is fetched and saved from memory.
+async function downloadFinal(e) {
+  e.preventDefault();
+  try {
+    const res = await fetch(`${API_BASE}/api/generate/download`, { credentials: 'include', headers: authHeaders() });
+    if (!res.ok) throw new ApiError('Could not download the file. Please generate it again.', res.status);
+    const url = URL.createObjectURL(await res.blob());
+    const a = el('a', { href: url, download: state.last_output?.filename || 'Course_File.pdf' });
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  } catch (err) { toast(err.message, 'error'); }
 }
 
 // ------------------------------------------------- course + descriptions
@@ -518,10 +537,11 @@ function initLogin() {
     }
     $('su-btn').disabled = true;
     try {
-      await api('/api/auth/signup', {
+      const r = await api('/api/auth/signup', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, noAuthRedirect: true,
         body: JSON.stringify({ name: $('su-name').value, email: $('su-email').value, password: $('su-pass').value }),
       });
+      setToken(r.token);
       location.reload();
     } catch (err) {
       $('login-error').textContent = err.message;
@@ -533,10 +553,11 @@ function initLogin() {
     $('login-error').hidden = true;
     $('login-btn').disabled = true;
     try {
-      await api('/api/auth/login', {
+      const r = await api('/api/auth/login', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, noAuthRedirect: true,
         body: JSON.stringify({ login_id: $('login-id').value, password: $('login-pass').value }),
       });
+      setToken(r.token);
       location.reload();
     } catch (err) {
       $('login-error').textContent = err.message;
@@ -547,6 +568,7 @@ function initLogin() {
   $('btn-logout').onclick = async () => {
     await flushAll();
     try { await api('/api/auth/logout', { method: 'POST', noAuthRedirect: true }); } catch { /* ignore */ }
+    setToken('');
     location.reload();
   };
 }
@@ -577,6 +599,7 @@ async function init() {
   $('input-multi').onchange = () => uploadMany($('input-multi').files);
   $('input-slot').onchange = slotUploadChosen;
   $('btn-generate').onclick = generate;
+  $('btn-download-final').addEventListener('click', downloadFinal);
   $('btn-preview-final').onclick = () => preview.open({
     url: `${API_BASE}/api/generate/download?inline=true&t=${Date.now()}`,
     name: state.last_output?.filename ?? 'Final course file', type: 'PDF (final course file)',

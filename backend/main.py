@@ -25,7 +25,7 @@ app = FastAPI(title="Course File Generator", version="1.0.0")
 
 if config.ALLOWED_ORIGINS:
     app.add_middleware(CORSMiddleware, allow_origins=config.ALLOWED_ORIGINS, allow_credentials=True,
-                       allow_methods=["GET", "POST", "PUT", "DELETE"], allow_headers=["Content-Type"])
+                       allow_methods=["GET", "POST", "PUT", "DELETE"], allow_headers=["Content-Type", "Authorization"])
 
 
 @app.exception_handler(AppError)
