@@ -50,7 +50,8 @@ def fill_template(course: dict, slots: list[dict], dest_docx: Path) -> None:
         if label in values:
             _set(row.cells[1], values[label])
 
-    desc = {s["letter"]: s.get("description", "") for s in slots}
+    # only sections that actually have a file are listed, matching the pages that follow
+    desc = {s["letter"]: (s.get("description", "") if s.get("file_id") else "") for s in slots}
     for row in index.rows:
         letter = row.cells[0].text.strip()
         if len(letter) == 1 and letter in desc:
